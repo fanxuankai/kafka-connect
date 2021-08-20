@@ -19,6 +19,8 @@ import static org.apache.kafka.connect.transforms.util.Requirements.requireMapOr
 import static org.apache.kafka.connect.transforms.util.Requirements.requireStructOrNull;
 
 /**
+ * 字段值替换
+ *
  * @author fanxuankai
  */
 public abstract class RegexFieldValue<R extends ConnectRecord<R>> implements Transformation<R> {
