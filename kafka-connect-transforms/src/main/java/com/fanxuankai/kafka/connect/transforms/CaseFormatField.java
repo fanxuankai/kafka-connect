@@ -13,8 +13,6 @@ import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.transforms.Transformation;
 import org.apache.kafka.connect.transforms.util.SchemaUtil;
 import org.apache.kafka.connect.transforms.util.SimpleConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +26,6 @@ import static org.apache.kafka.connect.transforms.util.Requirements.requireStruc
  * @author fanxuankai
  */
 public abstract class CaseFormatField<R extends ConnectRecord<R>> implements Transformation<R> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CaseFormatField.class);
     public static final String OVERVIEW_DOC = "Case format field used <code>com.google.common.base.CaseFormat</code>.";
 
     public static final ConfigDef CONFIG_DEF = new ConfigDef()
