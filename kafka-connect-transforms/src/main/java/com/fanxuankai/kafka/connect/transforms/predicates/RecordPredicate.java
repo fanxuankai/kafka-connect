@@ -11,8 +11,6 @@ import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.transforms.predicates.Predicate;
 import org.apache.kafka.connect.transforms.util.Requirements;
 import org.apache.kafka.connect.transforms.util.SimpleConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -21,7 +19,6 @@ import java.util.Map;
  * @author fanxuankai
  */
 public abstract class RecordPredicate<R extends ConnectRecord<R>> implements Predicate<R> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RecordPredicate.class);
     public static final String OVERVIEW_DOC = "Record predicates are based on JSON path expressions.";
     private static final String CONDITION_CONFIG = "condition";
     public static final ConfigDef CONFIG_DEF = new ConfigDef()
@@ -30,7 +27,7 @@ public abstract class RecordPredicate<R extends ConnectRecord<R>> implements Pre
                     "The condition.");
 
 
-    private JsonPath filterConditionPath;
+    private JsonPath predicateConditionPath;
 
     @Override
     public ConfigDef config() {
@@ -47,7 +44,7 @@ public abstract class RecordPredicate<R extends ConnectRecord<R>> implements Pre
                 "schema") : TypeConverter.convertObject(
                 Requirements.requireStruct(operatingValue(record), "test record with schema"), ((Struct)
                         operatingValue(record)).schema());
-        List<?> filtered = this.filterConditionPath.read(data,
+        List<?> filtered = this.predicateConditionPath.read(data,
                 Configuration.defaultConfiguration().addOptions(Option.ALWAYS_RETURN_LIST));
         return filtered.size() > 0;
     }
@@ -60,7 +57,7 @@ public abstract class RecordPredicate<R extends ConnectRecord<R>> implements Pre
     @Override
     public void configure(Map<String, ?> configs) {
         SimpleConfig simpleConfig = new SimpleConfig(config(), configs);
-        this.filterConditionPath = JsonPath.compile(simpleConfig.getString(CONDITION_CONFIG));
+        this.predicateConditionPath = JsonPath.compile(simpleConfig.getString(CONDITION_CONFIG));
     }
 
     protected abstract Schema operatingSchema(R record);
