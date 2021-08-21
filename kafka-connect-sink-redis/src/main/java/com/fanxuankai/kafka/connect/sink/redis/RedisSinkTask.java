@@ -6,8 +6,6 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,7 +15,6 @@ import java.util.Map;
  * @author fanxuankai
  */
 public class RedisSinkTask extends SinkTask {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RedisSinkTask.class);
     private RedisTemplate redisTemplate;
 
     @Override
