@@ -1,4 +1,4 @@
-package com.fanxuankai.kafka.connect.sink.redis;
+package com.fanxuankai.kafka.connect.sink.redis.config;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;

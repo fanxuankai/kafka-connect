@@ -1,14 +1,10 @@
 package com.fanxuankai.kafka.connect.sink.redis;
 
-import com.alibaba.fastjson.JSONObject;
-import org.apache.kafka.connect.data.Field;
-import org.apache.kafka.connect.data.Schema;
-import org.apache.kafka.connect.data.Struct;
+import com.fanxuankai.kafka.connect.sink.redis.config.RedisSinkConnectorConfig;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,22 +25,7 @@ public class RedisSinkTask extends SinkTask {
 
     @Override
     public void put(Collection<SinkRecord> records) {
-        records.forEach(sinkRecord -> {
-            if (sinkRecord.value() == null) {
-                redisTemplate.hDel(sinkRecord.topic(), sinkRecord.key().toString());
-                return;
-            }
-            Schema valueSchema = sinkRecord.valueSchema();
-            Struct value = (Struct) sinkRecord.value();
-            List<Field> fields = valueSchema.fields();
-            JSONObject jsonObject = new JSONObject();
-            for (Field field : fields) {
-                jsonObject.put(field.name(), value.get(field));
-            }
-            redisTemplate.hSet(sinkRecord.topic(),
-                    sinkRecord.key().toString(),
-                    jsonObject.toJSONString());
-        });
+        redisTemplate.put(records);
     }
 
     @Override

@@ -1,17 +1,22 @@
 package com.fanxuankai.kafka.connect.sink.redis;
 
+import com.fanxuankai.kafka.connect.sink.redis.config.RedisConnectorConfig;
+import com.fanxuankai.kafka.connect.sink.redis.config.RedisSinkConnectorConfig;
+import com.fanxuankai.kafka.connect.sink.redis.consumer.JsonSinkRecordConsumer;
+import com.fanxuankai.kafka.connect.sink.redis.consumer.SpringSinkRecordConsumer;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.SslOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
-import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
+import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
+import org.apache.kafka.connect.sink.SinkRecord;
 
 import java.time.Duration;
+import java.util.Collection;
 
 /**
  * @author fanxuankai
@@ -99,6 +104,20 @@ class RedisTemplate {
         }
     }
 
+    public void put(Collection<SinkRecord> records) {
+        RedisClusterAsyncCommands<String, String> commands = null;
+        if (RedisConnectorConfig.ClientMode.Cluster == config.clientMode) {
+            commands = clusterConnection.async();
+        } else if (RedisConnectorConfig.ClientMode.Standalone == config.clientMode) {
+            commands = connection.async();
+        }
+        if (config.storageFormat == RedisSinkConnectorConfig.StorageFormat.Json) {
+            new JsonSinkRecordConsumer(commands).accept(records);
+        } else if (config.storageFormat == RedisSinkConnectorConfig.StorageFormat.Spring) {
+            new SpringSinkRecordConsumer(commands).accept(records);
+        }
+    }
+
     public void stop() {
         if (RedisConnectorConfig.ClientMode.Cluster == config.clientMode) {
             clusterConnection.close();
@@ -106,26 +125,6 @@ class RedisTemplate {
         } else if (RedisConnectorConfig.ClientMode.Standalone == config.clientMode) {
             connection.close();
             redisClient.shutdown();
-        }
-    }
-
-    public void hSet(String key, String field, String value) {
-        if (RedisConnectorConfig.ClientMode.Cluster == config.clientMode) {
-            RedisAdvancedClusterAsyncCommands<String, String> asyncCommands = clusterConnection.async();
-            asyncCommands.hset(key, field, value);
-        } else if (RedisConnectorConfig.ClientMode.Standalone == config.clientMode) {
-            RedisAsyncCommands<String, String> asyncCommands = connection.async();
-            asyncCommands.hset(key, field, value);
-        }
-    }
-
-    public void hDel(String key, String... fields) {
-        if (RedisConnectorConfig.ClientMode.Cluster == config.clientMode) {
-            RedisAdvancedClusterAsyncCommands<String, String> asyncCommands = clusterConnection.async();
-            asyncCommands.hdel(key, fields);
-        } else if (RedisConnectorConfig.ClientMode.Standalone == config.clientMode) {
-            RedisAsyncCommands<String, String> asyncCommands = connection.async();
-            asyncCommands.hdel(key, fields);
         }
     }
 }

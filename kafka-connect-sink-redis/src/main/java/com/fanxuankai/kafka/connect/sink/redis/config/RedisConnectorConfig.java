@@ -1,7 +1,8 @@
-package com.fanxuankai.kafka.connect.sink.redis;
+package com.fanxuankai.kafka.connect.sink.redis.config;
 
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.StrUtil;
+import com.fanxuankai.kafka.connect.sink.redis.ConfigKeyBuilder;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.SocketOptions;
@@ -14,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-class RedisConnectorConfig extends AbstractConfig {
+public class RedisConnectorConfig extends AbstractConfig {
     public static final String HOSTS_CONFIG = "redis.hosts";
     static final String HOSTS_DOC = "The Redis hosts to connect to.";
     public static final String SSL_CONFIG = "redis.ssl.enabled";
