@@ -1,6 +1,7 @@
 package com.fanxuankai.kafka.connect.sink.redis.consumer;
 
 import cn.hutool.core.text.StrPool;
+import com.fanxuankai.kafka.connect.sink.redis.config.RedisSinkConnectorConfig;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
@@ -15,19 +16,19 @@ import java.util.Map;
 /**
  * @author fanxuankai
  */
-public class SpringSinkRecordConsumer implements SinkRecordConsumer {
-    private final RedisClusterAsyncCommands<String, String> commands;
+public class SpringSinkRecordConsumer extends AbstractSinkRecordConsumer {
 
-    public SpringSinkRecordConsumer(RedisClusterAsyncCommands<String, String> commands) {
-        this.commands = commands;
+    public SpringSinkRecordConsumer(RedisClusterAsyncCommands<String, String> commands,
+                                    RedisSinkConnectorConfig config) {
+        super(commands, config);
     }
 
     @Override
     public void accept(Collection<SinkRecord> sinkRecords) {
         for (SinkRecord sinkRecord : sinkRecords) {
             if (sinkRecord.value() == null) {
-                commands.srem(sinkRecord.topic(), sinkRecord.key().toString());
-                commands.del(sinkRecord.topic() + StrPool.COLON + sinkRecord.key().toString());
+                wait(commands.srem(sinkRecord.topic(), sinkRecord.key().toString()));
+                wait(commands.del(sinkRecord.topic() + StrPool.COLON + sinkRecord.key().toString()));
             } else {
                 Schema valueSchema = sinkRecord.valueSchema();
                 Struct value = (Struct) sinkRecord.value();
@@ -37,8 +38,8 @@ public class SpringSinkRecordConsumer implements SinkRecordConsumer {
                     Object fieldValue = value.get(field);
                     map.put(field.name(), fieldValue == null ? null : fieldValue.toString());
                 }
-                commands.hmset(sinkRecord.topic() + StrPool.COLON + sinkRecord.key().toString(), map);
-                commands.sadd(sinkRecord.topic(), sinkRecord.key().toString());
+                wait(commands.hmset(sinkRecord.topic() + StrPool.COLON + sinkRecord.key().toString(), map));
+                wait(commands.sadd(sinkRecord.topic(), sinkRecord.key().toString()));
             }
         }
     }

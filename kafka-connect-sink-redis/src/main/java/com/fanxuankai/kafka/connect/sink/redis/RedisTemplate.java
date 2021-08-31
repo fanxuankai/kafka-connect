@@ -3,6 +3,7 @@ package com.fanxuankai.kafka.connect.sink.redis;
 import com.fanxuankai.kafka.connect.sink.redis.config.RedisConnectorConfig;
 import com.fanxuankai.kafka.connect.sink.redis.config.RedisSinkConnectorConfig;
 import com.fanxuankai.kafka.connect.sink.redis.consumer.JsonSinkRecordConsumer;
+import com.fanxuankai.kafka.connect.sink.redis.consumer.SinkRecordConsumer;
 import com.fanxuankai.kafka.connect.sink.redis.consumer.SpringSinkRecordConsumer;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
@@ -27,6 +28,7 @@ class RedisTemplate {
     private StatefulRedisConnection<String, String> connection;
     private RedisClient redisClient;
     private RedisClusterClient redisClusterClient;
+    private SinkRecordConsumer sinkRecordConsumer;
 
     public RedisTemplate(RedisSinkConnectorConfig config) {
         this.config = config;
@@ -84,7 +86,6 @@ class RedisTemplate {
             }
             redisClusterClient = RedisClusterClient.create(config.redisUris());
             redisClusterClient.setOptions(clientOptions.build());
-
             clusterConnection = redisClusterClient.connect();
         } else if (RedisConnectorConfig.ClientMode.Standalone == config.clientMode) {
             final ClientOptions.Builder clientOptions = ClientOptions.builder()
@@ -102,23 +103,26 @@ class RedisTemplate {
                     String.format("%s is not supported", config.clientMode)
             );
         }
-    }
 
-    public void put(Collection<SinkRecord> records) {
-        RedisClusterAsyncCommands<String, String> commands = null;
+        RedisClusterAsyncCommands<String, String> commands;
         if (RedisConnectorConfig.ClientMode.Cluster == config.clientMode) {
             commands = clusterConnection.async();
-        } else if (RedisConnectorConfig.ClientMode.Standalone == config.clientMode) {
+        } else {
             commands = connection.async();
         }
         if (config.storageFormat == RedisSinkConnectorConfig.StorageFormat.Json) {
-            new JsonSinkRecordConsumer(commands).accept(records);
+            sinkRecordConsumer = new JsonSinkRecordConsumer(commands, config);
         } else if (config.storageFormat == RedisSinkConnectorConfig.StorageFormat.Spring) {
-            new SpringSinkRecordConsumer(commands).accept(records);
+            sinkRecordConsumer = new SpringSinkRecordConsumer(commands, config);
         }
     }
 
+    public void put(Collection<SinkRecord> records) {
+        sinkRecordConsumer.accept(records);
+    }
+
     public void stop() {
+        sinkRecordConsumer = null;
         if (RedisConnectorConfig.ClientMode.Cluster == config.clientMode) {
             clusterConnection.close();
             redisClusterClient.shutdown();

@@ -1,6 +1,7 @@
 package com.fanxuankai.kafka.connect.sink.redis.consumer;
 
 import com.alibaba.fastjson.JSONObject;
+import com.fanxuankai.kafka.connect.sink.redis.config.RedisSinkConnectorConfig;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
@@ -13,18 +14,17 @@ import java.util.List;
 /**
  * @author fanxuankai
  */
-public class JsonSinkRecordConsumer implements SinkRecordConsumer {
-    private final RedisClusterAsyncCommands<String, String> commands;
+public class JsonSinkRecordConsumer extends AbstractSinkRecordConsumer {
 
-    public JsonSinkRecordConsumer(RedisClusterAsyncCommands<String, String> commands) {
-        this.commands = commands;
+    public JsonSinkRecordConsumer(RedisClusterAsyncCommands<String, String> commands, RedisSinkConnectorConfig config) {
+        super(commands, config);
     }
 
     @Override
     public void accept(Collection<SinkRecord> sinkRecords) {
         for (SinkRecord sinkRecord : sinkRecords) {
             if (sinkRecord.value() == null) {
-                commands.hdel(sinkRecord.topic(), sinkRecord.key().toString());
+                wait(commands.hdel(sinkRecord.topic(), sinkRecord.key().toString()));
             } else {
                 Schema valueSchema = sinkRecord.valueSchema();
                 Struct value = (Struct) sinkRecord.value();
@@ -33,7 +33,7 @@ public class JsonSinkRecordConsumer implements SinkRecordConsumer {
                 for (Field field : fields) {
                     jsonObject.put(field.name(), value.get(field));
                 }
-                commands.hset(sinkRecord.topic(), sinkRecord.key().toString(), jsonObject.toJSONString());
+                wait(commands.hset(sinkRecord.topic(), sinkRecord.key().toString(), jsonObject.toJSONString()));
             }
         }
     }
