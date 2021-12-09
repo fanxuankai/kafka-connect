@@ -34,7 +34,7 @@ public abstract class ExtractField<R extends ConnectRecord<R>> implements Transf
     private static final String PURPOSE = "fields extraction";
 
     private Map<String, String> fieldNameByTopic;
-    private static final String REGEX = ",";
+    private static final String REGEX = ";";
 
     @Override
     public void configure(Map<String, ?> props) {
